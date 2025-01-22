@@ -56,7 +56,7 @@ bool enable_line_feed=false;
     port_scroll_index=4;
     int com_handle=0;
     com_handle=port.SetUpPort("COM5");
-    InitWindow(900,600,"UTILITIES");
+    InitWindow(900,600,"RISCV IDE");
     Font font_used=LoadFontEx("louis_george_cafe\\Louis George Cafe.ttf",FONT_SIZE,NULL,0);
     SetWindowState(FLAG_WINDOW_RESIZABLE);
     SetTargetFPS(30);
