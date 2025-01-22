@@ -10,6 +10,6 @@ This repository holds an assembler, mif generator , and a serial monitor for UAR
 To compile the project you need some more steps:  
 **FIRST:** you need to copy the whole **src** folder of **raylib(version 5.5)**, and paste it in the libs folder of this project.
 **SECOND:** copy the **raygui** header file and paste inside the raylib src folder that you copied to libs folder of the project.
-**LAST:** run the following command:  g++ main.cpp %CD%\libs\workaround.cpp -lraylib -lopengl32 -lcomdlg32 -lgdi32 -L%CD%\libs -L%CD%\libs\src -I%CD%\libs -I%CD%\libs\src -lwinmm -mwindows -o RISCV_IDE.exe    
-
-    
+**LAST:** run the following command:  
+##        g++ main.cpp %CD%\libs\workaround.cpp -lraylib -lopengl32 -lcomdlg32 -lgdi32 -L%CD%\libs -L%CD%\libs\src -I%CD%\libs -I%CD%\libs\src -lwinmm -mwindows -o RISCV_IDE.exe    
+  
