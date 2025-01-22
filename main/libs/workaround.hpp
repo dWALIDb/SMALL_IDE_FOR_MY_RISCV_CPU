@@ -1,8 +1,8 @@
 #ifndef WORKAROUND__
 #define UI__
 
-#define MAX_READ_BUFFER_SIZE 20
-#define MAX_WRITE_BUFFER_SIZE 20
+#define MAX_READ_BUFFER_SIZE 64
+#define MAX_WRITE_BUFFER_SIZE 64
 
 void MakeFile(const char* path);
 
