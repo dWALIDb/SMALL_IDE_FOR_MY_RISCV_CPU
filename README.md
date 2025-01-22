@@ -22,13 +22,11 @@ in the end you should get a RISCV_IDE executable that runs the program.
 # THE FINISHED STRUCTURE AFTER ADDING RAYLIB AND RAYGUI 
 
 main (folder)  
-&emsp;->main.cpp  
-&emsp;->louis_george_cafe  
-&emsp;&emsp;->(font files)  
-&emsp;->libs  
-&emsp;&emsp;->(assembler and workaround headers)  
-&emsp;&emsp;->src    
-&emsp;&emsp;&emsp;->(raylib src and raygui header)  
-
+&emsp;&emsp;->main.cpp  
+&emsp;&emsp;->louis_george_cafe  
+&emsp;&emsp;&emsp;->(font files)  
+&emsp;&emsp;->libs  
+&emsp;&emsp;&emsp;->(assembler and workaround headers)  
+&emsp;&emsp;&emsp;->src(copied from raylib version 5.5 and copy raygui header inside too!)    
       
-  This is kindof a project template for anyone that wants to use it.
+This is kindof a project template for anyone that wants to use it.
