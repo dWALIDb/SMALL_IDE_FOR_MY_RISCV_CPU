@@ -47,9 +47,9 @@ int Serial_port::SetUpBaud(int baud_rate)
     // Timeout = (MULTIPLIER * number_of_bytes) + CONSTANT
     // ----------------------------------------------------
     COMMTIMEOUTS t={0};
-    t.ReadIntervalTimeout=10;//TIME BETWEEN RECEPTION OF 2 CHARACTERS IN ms  80  10
+    t.ReadIntervalTimeout=1;//TIME BETWEEN RECEPTION OF 2 CHARACTERS IN ms  80  10
     t.ReadTotalTimeoutConstant=10;//100  10
-    t.ReadTotalTimeoutMultiplier=2;//10  10
+    t.ReadTotalTimeoutMultiplier=1;//10  10
     t.WriteTotalTimeoutConstant=5;//100  10
     t.WriteTotalTimeoutMultiplier=1;//10  10
     SetCommTimeouts(com,&t);
@@ -62,9 +62,9 @@ int Serial_port::SetUpBaud(int baud_rate)
 
 int Serial_port::SetUpPort(const char* port_name)
 {  
-    DestroyPort();
-    this->ENABLE_READ=false;
-    this->ENABLE_WRITE=false;
+this->ENABLE_READ=false;
+this->ENABLE_WRITE=false;
+
 com=CreateFileA(port_name,GENERIC_READ|GENERIC_WRITE,0,NULL,
 OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
 
@@ -80,11 +80,7 @@ return 0;
 Serial_port::Serial_port(){
     this->ENABLE_READ=false;
     this->ENABLE_WRITE=false;
-    if (SetUpPort("COM5")==0 && SetUpBaud(CBR_9600)==0)
-    {
-        this->ENABLE_READ=true;
-        this->ENABLE_WRITE=true;
-    }
+    this->STOP_READ=false;
 }
 
 Serial_port::~Serial_port(){
@@ -94,7 +90,7 @@ Serial_port::~Serial_port(){
 void Serial_port::ReadPort(){
 
     DWORD BYTES_READ;
-    DWORD d;
+
     while (!this->STOP_READ)
     {
         if (this->ENABLE_READ)
@@ -102,9 +98,15 @@ void Serial_port::ReadPort(){
             ReadFile(com,this->READ_BUF,MAX_READ_BUFFER_SIZE,&BYTES_READ,NULL);
             READ_BUF[BYTES_READ]=0;
             PurgeComm(com,PURGE_RXCLEAR);
-        } 
+        } else
+        {
+            Sleep(250);
+            READ_BUF[0]=0;
+            PurgeComm(com,PURGE_RXCLEAR);
+        }
     }
 }
+
 void Serial_port::WritePort(){
 
     DWORD BYTES_WRITE;
