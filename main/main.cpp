@@ -32,10 +32,9 @@ const int FONT_SIZE=25;
 bool autoscroll_enable=false;
 bool settings=false;
 bool functionality=false;
-char DATA[200]={0};
+char DATA[1024]={0};
 char input_file_path[256]={0};
 char output_file_path[256]={0};
-char transmitter[MAX_WRITE_BUFFER_SIZE]={0};
 Vector2 scroll_offset;
 Rectangle view_offset;
 const int icon=ICON_TOOLS;
@@ -50,23 +49,31 @@ bool enable_line_feed=false;
 
     assembler asmblr;
     Serial_port port;
-    
-    std::thread worker(&Serial_port::ReadPort,&port);
+
     baudrate_scroll_index=0;
     port_scroll_index=4;
     int com_handle=0;
     com_handle=port.SetUpPort("COM5");
-    InitWindow(900,600,"RISCV IDE");
+    
+    if (com_handle==0)
+    {
+        port.SetUpBaud(9600);
+    }
+    std::thread worker(&Serial_port::ReadPort,&port);
+
+    InitWindow(900,600,"RISC V IDE");
     Font font_used=LoadFontEx("louis_george_cafe\\Louis George Cafe.ttf",FONT_SIZE,NULL,0);
     SetWindowState(FLAG_WINDOW_RESIZABLE);
+    
     SetTargetFPS(30);
+    
     GuiSetStyle(DEFAULT,TEXT_SIZE,FONT_SIZE);
     GuiSetFont(font_used);
     GuiSetStyle(DEFAULT,TEXT_LINE_SPACING,FONT_SIZE);
     
 while (!WindowShouldClose())
 {   
-    if(strlen(DATA)+strlen(port.READ_BUF)<200-1 && port.READ_BUF[0]!=0)
+    if(strlen(DATA)+strlen(port.READ_BUF)<sizeof(DATA) && port.READ_BUF[0]!=0)
     {
         strcat(DATA,port.READ_BUF);
         if(enable_line_feed) strcat(DATA,"\n");
@@ -76,6 +83,14 @@ while (!WindowShouldClose())
     if (CheckCollisionPointRec(GetMousePosition(),Rectangle{GetScreenWidth()/2.0f-300,GetScreenHeight()-40.f,600,30}) && IsKeyDown(KEY_LEFT_CONTROL) && IsKeyReleased(KEY_V))
     {
         strcat_s(port.WRITE_BUF,sizeof(port.WRITE_BUF),GetClipboardText());
+    }
+    if (CheckCollisionPointRec(GetMousePosition(),Rectangle{GetScreenWidth()/4.0f,150+FONT_SIZE+5,400.0f,FONT_SIZE}) && IsKeyDown(KEY_LEFT_CONTROL) && IsKeyReleased(KEY_V))
+    {
+        strcat_s(input_file_path,sizeof(input_file_path),GetClipboardText());
+    }
+    if (CheckCollisionPointRec(GetMousePosition(),Rectangle{GetScreenWidth()/4.0f,220+FONT_SIZE+5,400.0f,FONT_SIZE}) && IsKeyDown(KEY_LEFT_CONTROL) && IsKeyReleased(KEY_V))
+    {
+        strcat_s(output_file_path,sizeof(output_file_path),GetClipboardText());
     }
     
 
@@ -100,6 +115,7 @@ while (!WindowShouldClose())
         case 0 : DrawTextEx(font_used,"Connected Successfully",{GetScreenWidth()/2.0f-150,40},25,1.00f,DARKGREEN);break;
         default: break;
         }     
+    
     GuiScrollPanel(Rectangle{10.0f,100.0f,(float)GetScreenWidth()-10.0f-10.0f,GetScreenHeight()-150.0f}, NULL,Rectangle{10.0f,100.0f,(float)MeasureTextEx(font_used,DATA,FONT_SIZE,1.0f).x+FONT_SIZE,(float)MeasureTextEx(font_used,DATA,FONT_SIZE,1.0f).y},&scroll_offset,&view_offset);
     
     BeginScissorMode(10.0f,100.0f,(float)GetScreenWidth()-10.0f-10.0f,GetScreenHeight()-150.0f);
@@ -113,9 +129,13 @@ while (!WindowShouldClose())
     {
         port.WritePort();
         //reset the buffer for new input
-        transmitter[0]=0;
         port.WRITE_BUF[0]=0;
     }
+    if (GuiButton(Rectangle{30,GetScreenHeight()-FONT_SIZE-10.0f,100,FONT_SIZE},"Clear"))
+    {
+        DATA[0]=0;
+    }
+    
 
     }
 
@@ -134,13 +154,16 @@ while (!WindowShouldClose())
         
         if (GuiButton(Rectangle{80,180,250,FONT_SIZE},"VALIDATE PORT") && !baudrate_active_dropdown && !port_active_dropdown)
         {       
-            port.DestroyPort(); 
+            if (com_handle==0)
+            {
+                port.DestroyPort();
+            }
             int a=0;
             int b=0;
             const char** chosen_port=TextSplit(ports,';',&b);
             com_handle=port.SetUpPort(chosen_port[port_scroll_index]);
             const char** chosen_baud_rate=TextSplit(baud_rates,';',&a);
-            port.SetUpBaud(TextToInteger(chosen_baud_rate[baudrate_scroll_index]));
+            port.SetUpBaud(TextToInteger(chosen_baud_rate[baudrate_scroll_index]));            
         }
         if(baudrate_active_dropdown) GuiLock();
         if(GuiDropdownBox(Rectangle{190,125,140,(float)font_used.baseSize+1},ports,&port_scroll_index,port_active_dropdown)) {port_active_dropdown=!port_active_dropdown;baudrate_active_dropdown=false;}
@@ -213,9 +236,7 @@ while (!WindowShouldClose())
                     {
                         MakeFile(new_paths[i]);
                     }
-                    // printf("%d\n",TextToInteger(TextSplit("64;128;256;512;1024",';',&a)[memsize_index]));
                 }
-                // printf("%s\n%s\n%s\n%s\n",new_paths[0],new_paths[1],new_paths[2],new_paths[3]);
                 int a=0;
                 asmblr.generate_bytesFor_32bits(std::string(output_file_path),std::string(new_paths[0]),std::string(new_paths[1]),std::string(new_paths[2]),std::string(new_paths[3]),TextToInteger(TextSplit(memsize,';',&a)[memsize_index]));
                 if(asmblr.valid_generation)
@@ -225,7 +246,6 @@ while (!WindowShouldClose())
             {
                 asmblr.valid_generation=false;
                 asmblr.error_message="FAILED TO GENERATE MIF FILES";
-                printf("CAUGHT EXEPTION");
             }
         }
     if (memsize_active_dropdown) GuiUnlock();    
@@ -249,6 +269,7 @@ while (!WindowShouldClose())
 port.STOP_READ=true;
 worker.join();
 port.DestroyPort();
+UnloadFont(font_used);
 CloseWindow();
 return 0;
 }
