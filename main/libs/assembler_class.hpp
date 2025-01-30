@@ -565,14 +565,14 @@ public:
 
                 if (machine_code==ERROR_MESSAGE)
                 {
-                    std::cout<<"\nINSTRUCTION: "+ opcode+" "+operands+" AT LINE: "+std::to_string(this->program_counter+1)+" IS NOT VALID\n";
-                    this->error_message="INSTRUCTION: "+ opcode+" "+operands+" AT LINE: "+std::to_string(this->program_counter+1)+" IS NOT VALID";
+                    std::cout<<"\nINSTRUCTION: "+ opcode+" "+operands+" AT LINE: "+std::to_string(this->program_counter/4+1)+" IS NOT VALID\n";
+                    this->error_message="INSTRUCTION: "+ opcode+" "+operands+" AT LINE: "+std::to_string(this->program_counter/4+1)+" IS NOT VALID";
                     this->valid_code=false;
                     break;
                 }
                 
 
-                std::cout << "line :" << this->program_counter+1 << " instruction: " << machine_code;
+                std::cout << "line :" << this->program_counter/4+1 << " instruction: " << machine_code;
 
                 if (machine_code != " " && machine_code.at(0) != '#')
                 { // strings index from left to right so msb of instruction is encoded at most left(or index 0)
