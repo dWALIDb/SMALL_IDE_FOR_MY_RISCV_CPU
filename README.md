@@ -32,7 +32,7 @@ main (folder)
 &emsp;&emsp;->louis_george_cafe  
 &emsp;&emsp;&emsp;->(font files)  
 &emsp;&emsp;->libs  
-&emsp;&emsp;&emsp;->(assembler and workaround headers)  
+&emsp;&emsp;&emsp;->(assembler and workaround headers raygui header file)
 &emsp;&emsp;&emsp;->src(copied from raylib version 5.5 and copy raygui header inside too!)    
       
 This is kindof a project template for anyone that wants to use it.
