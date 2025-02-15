@@ -21,7 +21,7 @@ command wmic win32pnp_entity is used to get usb to serial devices
 
 **LINUX**  
 on linux you need to install raylib with all its dependencies, for me i cloned the repo of raylib and built it using cmake.  
-zenity is used for file dialogs,*udevadm* is used to get usb devices names. after calling *ls* ttyusb and ttyacm, this gets the usb to serial devices that this app can connect to. 
+*zenity* is used for file dialogs,*udevadm* is used to get usb devices names. after calling *ls* ttyusb and ttyacm, this gets the usb to serial devices that this app can connect to. 
 these commands must be supprted
 run the compile batch file in otder to compile and execute the program
 # THE FINISHED STRUCTURE AFTER ADDING RAYLIB AND RAYGUI 
