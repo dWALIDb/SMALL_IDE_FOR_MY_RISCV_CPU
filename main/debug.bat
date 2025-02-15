@@ -1,0 +1,1 @@
+g++ main.cpp  libs/workaround.cpp -L./libs/src -L./libs -I./libs  -I./libs/src  -DPOSIX  -lraylib -lGL -lm -lpthread -ldl -lrt -lX11 -pthread  -o RISCV -g
