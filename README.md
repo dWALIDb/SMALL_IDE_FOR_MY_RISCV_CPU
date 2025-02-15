@@ -10,7 +10,7 @@ This repository holds an assembler, mif generator , and a serial monitor for UAR
 **MY OWN ASSEMBLER:** this was provided with the RISCV CORE that I made in VHDL, with some tweaks to handle errors and exeptions from the main codedirectly.**ADDED** flags for valid code and valid mif generation , and an error message that is empty as long as the code/mifs are valid else, it gives the problem with the code.  
 
 
-**BUILD/COMPILATION**
+**BUILD/COMPILATION**  
 **WINDOWS**  
 To compile the project you need some more steps:  
 **FIRST:** you need to copy the whole **src** folder of **raylib(version 5.5)**, and paste it in the libs folder of this project,make sure that libraylib.a is present in the dll files in that src folder, best way to do that is to download raylib from itch.io.
@@ -19,6 +19,12 @@ To compile the project you need some more steps:
 
 in the end you should get a RISCV_IDE executable that runs the program.
 command wmic win32pnp_entity is used to get usb to serial devices
+
+**LINUX**  
+on linux you need to install raylib with all its dependencies, for me i cloned the repo of raylib and built it using cmake.  
+zenity is used for file dialogs,*udevadm* is used to get usb devices names. after calling *ls* ttyusb and ttyacm, this gets the usb to serial devices that this app can connect to. 
+these commands must be supprted
+run the compile batch file in otder to compile and execute the program
 # THE FINISHED STRUCTURE AFTER ADDING RAYLIB AND RAYGUI 
 
 main (folder)  
@@ -30,7 +36,3 @@ main (folder)
 &emsp;&emsp;&emsp;->src(copied from raylib version 5.5 and copy raygui header inside too!)    
       
 This is kindof a project template for anyone that wants to use it.
-
-**LINUX**  
-on linux you need to install raylib with all its dependencies, for me i cloned the repo of raylib and built it using cmake.  
-zenity is used for file dialogs,udevadm is used to get usb devices names. after calling lsusb ttyusb and ttyacm, this gets the usb to serial devices that this app can connect to. 
