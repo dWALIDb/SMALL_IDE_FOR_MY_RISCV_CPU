@@ -102,7 +102,7 @@ instruction_properties={
     {"interrupt_enable",std::tuple("0111111",'I',"000","/")},  
     };
 
-    unsigned int program_counter = 0;
+    unsigned long program_counter = 0;
     int jump;
     std::ofstream output_file;
     std::ifstream input_file;
@@ -268,6 +268,7 @@ public:
                     }
                     immediate_value = convert_to_stringOF_binary(immediate_value, 11);
                     // strings are indexed from left to right this is why msb is at index "0" of string :)
+                    // return immediate_value.at(0) + immediate_value.substr(2, 6) + OPERAND2 + OPERAND1 + std::get<2>(instruction_properties.at(opcode)) + immediate_value.substr(8, 4) + immediate_value.at(1) + "1100011";
                     return immediate_value.at(0) + immediate_value.substr(2, 6) + OPERAND2 + OPERAND1 + std::get<2>(instruction_properties.at(opcode)) + immediate_value.substr(8, 3) + "0" + immediate_value.at(1) + "1100011";
                 break;
 
