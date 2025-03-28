@@ -68,6 +68,7 @@ char* DATA;
 size_t DATA_size=64;
 char input_file_path[256]={0};
 char output_file_path[256]={0};
+char mem_size_buf[3]={0};
 // variables for scroll panel of serial monitor
 // and for indeces of drop down boxes
 Vector2 scroll_offset;
@@ -75,10 +76,9 @@ Rectangle view_offset;
 const int icon=ICON_TOOLS;
 int baudrate_scroll_index=0;
 int port_scroll_index=0;
-int memsize_index=0;
 bool baudrate_active_dropdown=0;
 bool port_active_dropdown=0;
-bool memsize_active_dropdown=0;
+
 
 // dynamic memory alocation for the recieving buffer to get as much data as possible 
 //without caring as much about buffer sizes :)
@@ -200,8 +200,8 @@ while (!WindowShouldClose())
 
     //auto scroll_offset
     if (autoscroll_enable) scroll_offset.y=-MeasureTextEx(font_used,DATA,FONT_SIZE,1.0f).y;
-
-    if (GuiTextBox(Rectangle{GetScreenWidth()/5.0f,GetScreenHeight()-10.f-FONT_SIZE,3*GetScreenWidth()/5.0f,FONT_SIZE},port.transmitter_buff,MAX_WRITE_BUFFER_SIZE-1,CheckCollisionPointRec(GetMousePosition(),Rectangle{GetScreenWidth()/2.0f-300,GetScreenHeight()-40.f,600,30}))
+    
+    if (GuiTextBox(Rectangle{GetScreenWidth()/5.0f,GetScreenHeight()-10.f-FONT_SIZE,3*GetScreenWidth()/5.0f,FONT_SIZE},port.transmitter_buff,MAX_WRITE_BUFFER_SIZE-1,CheckCollisionPointRec(GetMousePosition(),Rectangle{GetScreenWidth()/5.0f,GetScreenHeight()-10.f-FONT_SIZE,3*GetScreenWidth()/5.0f,FONT_SIZE}))
     || GuiButton(Rectangle{4*GetScreenWidth()/5.0f,GetScreenHeight()-FONT_SIZE-10.0f,(float)MeasureText(serial_send,FONT_SIZE),FONT_SIZE},serial_send))
     {
         if(enable_line_feed) strcat(port.transmitter_buff,"\n");
@@ -227,14 +227,14 @@ while (!WindowShouldClose())
         GuiPanel(Rectangle{60,45,650,300},"SETTINGS");
         if(port_active_dropdown || baudrate_active_dropdown) GuiLock();
         // we can append new line automaticaly when sending/auto scrol/enabling comunication
-        GuiCheckBox(Rectangle{100,210,FONT_SIZE,FONT_SIZE},"APPEND LINE FEED",&enable_line_feed);
-        GuiCheckBox(Rectangle{400,210,FONT_SIZE,FONT_SIZE},"AUTOSCROLL",&autoscroll_enable);
-        GuiCheckBox(Rectangle{100,250,FONT_SIZE,FONT_SIZE},"ENABLE WRITE",&port.ENABLE_WRITE);
-        GuiCheckBox(Rectangle{400,250,FONT_SIZE,FONT_SIZE},"ENABLE READ",&port.ENABLE_READ);
+        GuiCheckBox(Rectangle{100,220,FONT_SIZE,FONT_SIZE},"APPEND LINE FEED",&enable_line_feed);
+        GuiCheckBox(Rectangle{400,220,FONT_SIZE,FONT_SIZE},"AUTOSCROLL",&autoscroll_enable);
+        GuiCheckBox(Rectangle{100,260,FONT_SIZE,FONT_SIZE},"ENABLE WRITE",&port.ENABLE_WRITE);
+        GuiCheckBox(Rectangle{400,260,FONT_SIZE,FONT_SIZE},"ENABLE READ",&port.ENABLE_READ);
         //show the buffer size in case it matters for user
-        DrawTextEx(font_used,TextFormat("BUFFER SIZE: %d/%d",strlen(DATA),DATA_size),Vector2{240,280},FONT_SIZE,1,DARKGRAY);
+        DrawTextEx(font_used,TextFormat("BUFFER SIZE: %d/%d",strlen(DATA),DATA_size),Vector2{240,290},FONT_SIZE,1,DARKGRAY);
 
-        if (GuiButton(Rectangle{75,170,200,FONT_SIZE+1},"CONNECT") && !baudrate_active_dropdown && !port_active_dropdown)
+        if (GuiButton(Rectangle{75,170,200,FONT_SIZE+5},"CONNECT") && !baudrate_active_dropdown && !port_active_dropdown)
         {  
             //set the com port that the user sets up  
             if (com_handle==0)
@@ -244,18 +244,19 @@ while (!WindowShouldClose())
             }
             int a=0;
             int b=0;
+            //get the comm port and baudrate depending on the chosen values
             char** chosen_port=TextSplit(devices,';',&b);
             com_handle=port.SetUpPort(chosen_port[port_scroll_index]);
             char** chosen_baud_rate=TextSplit(baud_rates,';',&a);
             port.SetUpBaud(TextToInteger(chosen_baud_rate[baudrate_scroll_index]));            
         }
 
-        if (GuiButton(Rectangle{285,170,200,FONT_SIZE+1},"REFRESH"))
+        if (GuiButton(Rectangle{285,170,200,FONT_SIZE+5},"REFRESH"))
         {
             //look for the the devices that are connected
             GetDevices(devices,owners);            
         }
-        if (GuiButton(Rectangle{495,170,200,FONT_SIZE+1},"DISCONNECT"))
+        if (GuiButton(Rectangle{495,170,200,FONT_SIZE+5},"DISCONNECT"))
         {
             //look for the the devices that are connected
             if (com_handle==0)
@@ -268,8 +269,8 @@ while (!WindowShouldClose())
 
         if(port_active_dropdown || baudrate_active_dropdown) GuiUnlock();
         // GuiDropDown must be last drown to cover other parameters that it may be dropped on
-        GuiLabel(Rectangle {75,90,140,(float)font_used.baseSize+1},"COMPORT");
-        GuiLabel(Rectangle {75,130,140,(float)font_used.baseSize+1},"BAUDRATE");
+        GuiLabel(Rectangle {75,90,140,(float)font_used.baseSize+5},"COMPORT");
+        GuiLabel(Rectangle {75,130,140,(float)font_used.baseSize+5},"BAUDRATE");
         
         
         if(port_active_dropdown) GuiLock();
@@ -308,77 +309,76 @@ while (!WindowShouldClose())
             detachable1.detach();
         }
     
-    if (memsize_active_dropdown) GuiLock();
 
-        if(GuiButton(Rectangle{GetScreenWidth()/4.0f,350,400,FONT_SIZE},"ASSEMBLE"))
-        {    
-            try
-            {
-                // input /output files must exist
-                asmblr.assemble(input_file_path,output_file_path);
-                if(asmblr.valid_code)
-                asmblr.error_message="TERMINATED SUCCESSFULLY CONGRATULATIONS";
-            }
-            catch(...)
-            {
-                asmblr.error_message="ERROR AT LINE "+std::to_string(asmblr.Get_program_counter()/4+1);
-                asmblr.valid_code=false;
-            }
-            
-        }
-        if(GuiButton(Rectangle{GetScreenWidth()/4.0f,390,400,FONT_SIZE},"GENERATE MIF"))
+    if(GuiButton(Rectangle{GetScreenWidth()/4.0f,350,400,FONT_SIZE},"ASSEMBLE"))
+    {    
+        try
         {
-            // Input is output of assembler and mif is in same directory
-            char new_paths[4][256]={0};
-            const char* working_path=GetDirectoryPath(output_file_path);
-            try
-            {
-                for (int i = 0; i < 4; i++)
-                {
-                    strcpy(new_paths[i],working_path);
-                    strcat(new_paths[i],"/");
-                    strcat(new_paths[i],GetFileNameWithoutExt(output_file_path));
-                    strcat(new_paths[i],"_MIF");
-                    strcat(new_paths[i],std::to_string(i).c_str());
-                    strcat(new_paths[i],".mif");
-
-                    if (!FileExists(new_paths[i]))
-                    {
-                        MakeFile(new_paths[i]);
-                    }
-                }
-                int a=0;
-                asmblr.generate_instruction_32bits(std::string(output_file_path),std::string(new_paths[0]),std::string(new_paths[1]),std::string(new_paths[2]),std::string(new_paths[3]),TextToInteger(TextSplit(memsize,';',&a)[memsize_index]));                
-                for (int i = 0; i < 4; i++)
-                {
-                    strcpy(new_paths[i],working_path);
-                    strcat(new_paths[i],"/");
-                    strcat(new_paths[i],GetFileNameWithoutExt(output_file_path));
-                    strcat(new_paths[i],"_DATA_MIF");
-                    strcat(new_paths[i],std::to_string(i).c_str());
-                    strcat(new_paths[i],".mif");
-
-                    if (!FileExists(new_paths[i]))
-                    {
-                        MakeFile(new_paths[i]);
-                    }
-                }
-                asmblr.generate_data_32bits(std::string(output_file_path),std::string(new_paths[0]),std::string(new_paths[1]),std::string(new_paths[2]),std::string(new_paths[3]),TextToInteger(TextSplit(memsize,';',&a)[memsize_index]));
-                if(asmblr.valid_generation)
-                asmblr.error_message="TERMINATED SUCCESSFULLY CONGRATULATIONS";
-            }
-            catch(...)
-            {
-                asmblr.valid_generation=false;
-                asmblr.error_message="FAILED TO GENERATE MIF FILES \nCHECK FOR THE APPROPRIATE SIZE";
-            }
+            // input /output files must exist
+            asmblr.assemble(input_file_path,output_file_path);
+            if(asmblr.valid_code)
+            asmblr.error_message="TERMINATED SUCCESSFULLY CONGRATULATIONS";
         }
-    if (memsize_active_dropdown) GuiUnlock();    
-
-    DrawTextEx(font_used,"Number of Adresses:",Vector2{GetScreenWidth()/4.0f,290},FONT_SIZE,1.0f,BLUE);
-    if (GuiDropdownBox(Rectangle{GetScreenWidth()/4.0f+300,290,100,FONT_SIZE},memsize,&memsize_index,memsize_active_dropdown)) memsize_active_dropdown=!memsize_active_dropdown;
-
+        catch(...)
+        {
+            asmblr.error_message="ERROR AT LINE "+std::to_string(asmblr.Get_program_counter()/4+1);
+            asmblr.valid_code=false;
+        }
+          
     }
+    if(GuiButton(Rectangle{GetScreenWidth()/4.0f,390,400,FONT_SIZE},"GENERATE MIF"))
+    {
+        // Input is output of assembler and mif is in same directory
+        char new_paths[4][256]={0};
+        const char* working_path=GetDirectoryPath(output_file_path);
+        try
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                strcpy(new_paths[i],working_path);
+                strcat(new_paths[i],"/");
+                strcat(new_paths[i],GetFileNameWithoutExt(output_file_path));
+                strcat(new_paths[i],"_MIF");
+                strcat(new_paths[i],std::to_string(i).c_str());
+                strcat(new_paths[i],".mif");
+                if (!FileExists(new_paths[i]))
+                {
+                    MakeFile(new_paths[i]);
+                }
+            }
+            int a=0;
+            asmblr.generate_instruction_32bits(std::string(output_file_path),std::string(new_paths[0]),std::string(new_paths[1]),std::string(new_paths[2]),std::string(new_paths[3]),1<<(TextToInteger(mem_size_buf)));                
+            for (int i = 0; i < 4; i++)
+            {
+                strcpy(new_paths[i],working_path);
+                strcat(new_paths[i],"/");
+                strcat(new_paths[i],GetFileNameWithoutExt(output_file_path));
+                strcat(new_paths[i],"_DATA_MIF");
+                strcat(new_paths[i],std::to_string(i).c_str());
+                strcat(new_paths[i],".mif");
+                if (!FileExists(new_paths[i]))
+                {
+                    MakeFile(new_paths[i]);
+                }
+            }
+            asmblr.generate_data_32bits(std::string(output_file_path),std::string(new_paths[0]),std::string(new_paths[1]),std::string(new_paths[2]),std::string(new_paths[3]),1<<TextToInteger(mem_size_buf));
+            if(asmblr.valid_generation)
+            asmblr.error_message="TERMINATED SUCCESSFULLY CONGRATULATIONS";
+        }
+        catch(...)
+        {
+            asmblr.valid_generation=false;
+            asmblr.error_message="FAILED TO GENERATE MIF FILES \nCHECK FOR THE APPROPRIATE SIZE";
+        }
+    }
+
+    DrawTextEx(font_used,"Number of address lines (1 -> 32):",Vector2{GetScreenWidth()/4.0f,290},FONT_SIZE,1.0f,BLUE);
+    if (GuiTextBox(Rectangle{GetScreenWidth()/4.0f+350,290,2*FONT_SIZE,FONT_SIZE+5},mem_size_buf,sizeof mem_size_buf,CheckCollisionPointRec(GetMousePosition(),Rectangle{GetScreenWidth()/4.0f+350,290,2*FONT_SIZE,FONT_SIZE+5}))){}
+    //check if correct value was specified
+    if(TextToInteger(mem_size_buf)<1 ||TextToInteger(mem_size_buf)>32){
+        DrawTextEx(font_used,"Please Specify correct value",Vector2{GetScreenWidth()/4.0f,320},FONT_SIZE,1,RED);
+    }
+}
 
     //debug garbage ;)
     // DrawText(TextFormat("sx:%.2f sy:%.2f",scroll_offset.x,scroll_offset.y),10+500,220,20,BLACK);
