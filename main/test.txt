@@ -1,9 +1,14 @@
-addi x1,x0,0    ;matrix1 addres (32x32 matrix)0->1023
-addi x2,x0,1025 ;matrix2 addres (3x3 kernel) 1025->1033
-addi x3,x0,1040 ;output matrix address (29x29 matrix) 1036->2060
+;made to be potentially used as a subroutine 
+;NOTE: add push and pop for set up
+;you provide address of image x11,address of kernel x2 and address of output x3 
+;size of image dimension  in x4,it must be "nxn" and provide n only 
+
+addi x11,x0,0    ;matrix1 addres 
+addi x2,x0,1025 ;3x3 kernel (filter)
+addi x3,x0,1040 ;output matrix address
 addi x4,x0,6    ;CONSTANT size of pic (square matrix)
 addi x5,x0,3    ;CONSTANT size of (kernel)
-sub x8,x4,x5    
+sub x8,x4,x5    ;calculate size of output matrix with stride=1 and no padding(valid) 
 addi x8,x8,1    ;CONSTANT get size of output in x8 with stride=1
 addi x9,x0,0   ;iterator for width matrix(size of output)
 addi x10,x0,0   ;keeps track of rows x10 x x4 to get row we operate on 
@@ -13,62 +18,62 @@ addi x10,x0,0   ;keeps track of rows x10 x x4 to get row we operate on
 .convolve
 
 flw x1,x2,0     ;load weight
-lw x6,x1,0      ;load picture value 0 
+lw x6,x11,0      ;load picture value 0 
 FCVT.S.W x2,x6  ;convert value of picture to float
 fmul x4,x1,x2   ;multiply the weight with picture value and put in x4 directly,other weights put in x3 and accumulate in x4
 
 flw x1,x2,1     ;load weight
-addi x1,x1,1
-lw x6,x1,0     ;load picture value 1 
+addi x11,x11,1
+lw x6,x11,0     ;load picture value 1 
 FCVT.S.W x2,x6  ;convert value of picture to float
 fmul x3,x1,x2   ;multiply the weight with picture value and put in x3
 fadd x4,x4,x3   ;accumulate result
 
 flw x1,x2,2     ;load weight
-addi x1,x1,1
-lw x6,x1,0      ;load picture value 2 
+addi x11,x11,1
+lw x6,x11,0      ;load picture value 2 
 FCVT.S.W x2,x6  ;convert value of picture to float
 fmul x3,x1,x2   ;multiply the weight with picture value and put in x3
 fadd x4,x4,x3   ;accumulate result
 
 flw x1,x2,3     ;load weight
-add x1,x8,x1    ;access the new row(directly at first value x8 already decremented 3 from size of pic)
-lw x6,x1,0      ;load picture value 3 next row
+add x11,x8,x11    ;access the new row(directly at first value x8 already decremented 3 from size of pic)
+lw x6,x11,0      ;load picture value 3 next row
 FCVT.S.W x2,x6  ;convert value of picture to float
 fmul x3,x1,x2   ;multiply the weight with picture value and put in x3
 fadd x4,x4,x3   ;accumulate result
 
 flw x1,x2,4     ;load weight
-addi x1,x1,1
-lw x6,x1,0      ;load picture value 4 next row change offest according to image size 
+addi x11,x11,1
+lw x6,x11,0      ;load picture value 4 next row change offest according to image size 
 FCVT.S.W x2,x6  ;convert value of picture to float
 fmul x3,x1,x2   ;multiply the weight with picture value and put in x3
 fadd x4,x4,x3   ;accumulate result
 
 flw x1,x2,5     ;load weight
-addi x1,x1,1
-lw x6,x1,0      ;load picture value 5 next row  change offest according to image size
+addi x11,x11,1
+lw x6,x11,0      ;load picture value 5 next row  change offest according to image size
 FCVT.S.W x2,x6  ;convert value of picture to float
 fmul x3,x1,x2   ;multiply the weight with picture value and put in x3
 fadd x4,x4,x3   ;accumulate result
 
 flw x1,x2,6     ;load weight
-add x1,x8,x1    ;access the new row(directly at first value x8 already decremented 3 from size of pic)
-lw x6,x1,0      ;load picture value 6 next row  change offest according to image size
+add x11,x8,x11    ;access the new row(directly at first value x8 already decremented 3 from size of pic)
+lw x6,x11,0      ;load picture value 6 next row  change offest according to image size
 FCVT.S.W x2,x6  ;convert value of picture to float
 fmul x3,x1,x2   ;multiply the weight with picture value and put in x3
 fadd x4,x4,x3   ;accumulate result
 
 flw x1,x2,7     ;load weight
-addi x1,x1,1
-lw x6,x1,0      ;load picture value 7 next row change 2xoffest according to image size
+addi x11,x11,1
+lw x6,x11,0      ;load picture value 7 next row change 2xoffest according to image size
 FCVT.S.W x2,x6  ;convert value of picture to float
 fmul x3,x1,x2   ;multiply the weight with picture value and put in x3
 fadd x4,x4,x3   ;accumulate result
 
 flw x1,x2,8     ;load weight
-addi x1,x1,1
-lw x6,x1,0      ;load picture value 8 next row
+addi x11,x11,1
+lw x6,x11,0      ;load picture value 8 next row
 FCVT.S.W x2,x6  ;convert value of picture to float
 fmul x3,x1,x2   ;multiply the weight with picture value and put in x3
 fadd x4,x4,x3   ;accumulate result of convolution  
@@ -78,49 +83,44 @@ SW x7,x3,0      ;put result in position
 
 addi x3,x3,1    ;prepare new slot for output
 addi x9,x9,1    ;increment the counter for next iteration
-mul x1,x4,x10   ;this gets the next row to convolve
-add x1,x9,x1    ;get the next column in the row we are processing
+mul x11,x4,x10   ;this gets the next row to convolve
+add x11,x9,x11    ;get the next column in the row we are processing
 bneq x9,x8,convolve 
 
 addi x9,x0,0    ;reset counter
 addi x10,x10,1  ;increment the height by one
-mul x1,x4,x10   ;this gets the next row to convolve
+mul x11,x4,x10   ;this gets the next row to convolve
 bneq x10,x8,convolve ;we do that for 29 rows also
 
 
-;perform RELU
-;addi x3,x0,1036 ;get the output addres
-;mul x10,x8,x8  ;get the output addres
-;.RELU
-;lw x9,x3,0
-;bge x9,x0,no_replace    ;if less than 0 replace by 0
-;sw x0,x3,0
-;.no_replace
-;addi x3,x3,1
-;addi x10,x10,-1
-;bneq x10,x0,RELU
 
 ;calculate error and update weights get Sum of Squared Error
 ;no need to get sqare of error because we do the back propagation hence we need derivative 
 ;(desired-predicted)*(-2) for each pixel on feature map (desired output is original pic hence i want a kernel that doesnt affect original)
-;this error is devided by 255 as well as the input for corresponding pixel this means that everything is calculated like it was normalized
+;this error is devided by 255 as well as the input for corresponding pixel this means that everything is calculated as if it was normalized
 ;normalizing takes space and i dont want to do that at the moment
-;learning rate is 0.1 for gradient descent
 ;dL/dw=dZ/dw * dL/dZ=(corresponding pixel we want)*sum((desired-predicted)*(-2))
 ;new W=old W - learning_rate* dL/dW
 
+;made to be potentially used as subroutine x1 has return value
+;NOTE: push values and pop them to go back
+;you pass address of image x11,address of kernel x2 ,and output address x3
+;size of image dimension  in x4,it must be "nxn" and provide n only 
+;address where to store (error²) is put in x18
+;pass learning rate factor in x12 it is calculated usig the following formula
+;learning rate = -2/(factor put in x12)  why? idk just know that you have some control :)
 
-addi x1,x0,0    ;desired value
-addi x2,x0,1025 ;matrix2 addres (3x3 kernel) 1025->1033
-addi x3,x0,1040 ;prediction output matrix address (30x30 matrix) 1036->2060
+addi x11,x0,0    ;desired value address
+addi x2,x0,1025 ;kernel address (3x3 kernel)
+addi x3,x0,1040 ;predicted matrix address
+addi x4,x0,6    ;CONSTANT size of pic (square matrix)
+addi x5,x0,3    ;CONSTANT size of (kernel)
+sub x8,x4,x5    ;calculate size of output matrix with stride=1 and no padding(valid) 
+addi x8,x8,1    ;CONSTANT get size of output in x8 with stride=1
 addi x9,x0,0    ;iterator for width matrix(size of output)
 addi x10,x0,0   ;keeps track of rows x10 x x4 to get row we operate on 
-addi x11,x0,-2  ;CONSTANT -2 for multiplication 
-addi x12,x0,-200   ;used to calculate learning rate (increases over time)(starts at -20000 and gets smaller) 
-
-;blt x0,x12,no_reset
-;addi x12,x0,-2000   ;if leaning rate increased from -2000 to 0 we need to slow it again
-;.no_reset
+addi x17,x0,-2  ;CONSTANT -2 for multiplication 
+addi x12,x0,-2000   ;used to calculate learning rate (increases over time)(starts at -20000 and gets smaller) 
 
 LUI x13,$80000000   ;CONSTANT used to invert the MSB of float register cuz we only got addition
 ;i was adding 255 each iteration without noticing AHAHAHAHAHAHHAHAHAHHAAHHA i fixed it
@@ -130,11 +130,11 @@ LUI x13,$80000000   ;CONSTANT used to invert the MSB of float register cuz we on
 addi x14,x0,255   ;CONSTANT used to normalize the results to not have gradient exploding
 addi x15,x0,0   ;used to calculate  squared error
 addi x16,x0,0   ;used to calculate the sum of squared error
-
+addi x18,x0,1035 ;address of sum of squared error
 ;form CONSTANT 0.01 (learning rate) for gradient descent
 FCVT.S.W x9,x14   ;CONSTANT used to normalize the input and the error to not have exploding gradient 
 FCVT.S.W x1,x12   ;-200 float in x1 
-FCVT.S.W x2,x11  ;-2 float in x2 
+FCVT.S.W x2,x17  ;-2 float in x2 
 fdiv x6,x2,x1    ;CONSTANT float x6 has the learning rate -2/-200 we setup the value cuz multiplication is faster than division
 
 ;now we have the error we need to multiply each pixel by the error and use it to update the weights
@@ -142,12 +142,12 @@ fdiv x6,x2,x1    ;CONSTANT float x6 has the learning rate -2/-200 we setup the v
 .update_weights
 
 flw x2,x2,0      ;get the first weight into float register x2
-lw x6,x1,0       ;load the picture pixel
+lw x6,x11,0       ;load the picture pixel
 lw x7,x3,0       ;load the output pixel
 sub x7,x6,x7     ;error=(truth - prediction)
 mul x15,x7,x7   ;this is used for squred error to show to user (error²)
 add x16,x16,x15   ;this is used for sum of squred error to show to user sum of (error)² 
-mul x7,x7,x11    ;error = -2*(truth - prediction)
+mul x7,x7,x17    ;error = -2*(truth - prediction)
 FCVT.S.W x3,x6   ;x3 has the pixel as a float
 fdiv x3,x3,x9   ;we get the input/255 its basicaly as if we calculated everything normalized
 FCVT.S.W x1,x7   ;x1 has the ERROR as a float
@@ -161,8 +161,8 @@ fadd x2,x5,x2    ;add the result to the weight
 fsw x2,x2,0      ;update the weight x2(float) has new weight and x2 (int) has the address
 
 flw x2,x2,1      ;get the second weight into float register x2
-addi x1,x1,1     :access next value of pic 
-lw x6,x1,0       ;load the picture pixel
+addi x11,x11,1     ;access next value of pic 
+lw x6,x11,0       ;load the picture pixel
 FCVT.S.W x3,x6   ;x3 has the pixel as a float
 fdiv x3,x3,x9    ;we get the input/255 done once per iteration
 fmul x4,x1,x3    ;multiply pixel by error
@@ -174,8 +174,8 @@ fadd x2,x2,x5    ;add the result to the weight
 fsw x2,x2,1      ;update the weight
 
 flw x2,x2,2      ;get the third weight into float register x2
-addi x1,x1,1     :access next value of pic 
-lw x6,x1,0       ;load the picture pixel
+addi x11,x11,1     ;access next value of pic 
+lw x6,x11,0       ;load the picture pixel
 FCVT.S.W x3,x6   ;x3 has the pixel as a float
 fdiv x3,x3,x9    ;we get the input/255 done once per iteration
 fmul x4,x1,x3    ;multiply pixel by error
@@ -187,8 +187,8 @@ fadd x2,x2,x5    ;add the result to the weight
 fsw x2,x2,2      ;update the weight
 
 flw x2,x2,3      ;get the fourth weight into float register x2
-add x1,x8,x1     :access next value of pic 
-lw x6,x1,0       ;load the picture pixel
+add x11,x8,x11     ;access next value of pic 
+lw x6,x11,0       ;load the picture pixel
 FCVT.S.W x3,x6   ;x3 has the pixel as a float
 fdiv x3,x3,x9    ;we get the input/255 done once per iteration
 fmul x4,x1,x3    ;multiply pixel by error
@@ -200,8 +200,8 @@ fadd x2,x2,x5    ;add the result to the weight
 fsw x2,x2,3      ;update the weight
 
 flw x2,x2,4      ;get the fifth weight into float register x2
-addi x1,x1,1     :access next value of pic 
-lw x6,x1,0       ;load the picture pixel
+addi x11,x11,1     ;access next value of pic 
+lw x6,x11,0       ;load the picture pixel
 FCVT.S.W x3,x6   ;x3 has the pixel as a float
 fdiv x3,x3,x9    ;we get the input/255 done once per iteration
 fmul x4,x1,x3    ;multiply pixel by error
@@ -213,8 +213,8 @@ fadd x2,x2,x5    ;add the result to the weight
 fsw x2,x2,4      ;update the weight
 
 flw x2,x2,5      ;get the sixth weight into float register x2
-addi x1,x1,1     :access next value of pic 
-lw x6,x1,0       ;load the picture pixel
+addi x11,x11,1     ;access next value of pic 
+lw x6,x11,0       ;load the picture pixel
 FCVT.S.W x3,x6   ;x3 has the pixel as a float
 fdiv x3,x3,x9   ;we get the input/255 done once per iteration
 fmul x4,x1,x3    ;multiply pixel by error
@@ -226,8 +226,8 @@ fadd x2,x2,x5    ;add the result to the weight
 fsw x2,x2,5      ;update the weight
 
 flw x2,x2,6      ;get the seventh weight into float register x2
-add x1,x8,x1     :access next value of pic 
-lw x6,x1,0       ;load the picture pixel
+add x11,x8,x11     ;access next value of pic 
+lw x6,x11,0       ;load the picture pixel
 FCVT.S.W x3,x6   ;x3 has the pixel as a float
 fdiv x3,x3,x9    ;we get the input/255 done once per iteration
 fmul x4,x1,x3    ;multiply pixel by error
@@ -239,8 +239,8 @@ fadd x2,x2,x5    ;add the result to the weight
 fsw x2,x2,6      ;update the weight
 
 flw x2,x2,7      ;get the eighth weight into float register x2
-addi x1,x1,1     :access next value of pic 
-lw x6,x1,0       ;load the picture pixel
+addi x11,x11,1     ;access next value of pic 
+lw x6,x11,0       ;load the picture pixel
 FCVT.S.W x3,x6   ;x3 has the pixel as a float
 fdiv x3,x3,x9    ;we get the input/255 done once per iteration
 fmul x4,x1,x3    ;multiply pixel by error
@@ -252,8 +252,8 @@ fadd x2,x2,x5    ;add the result to the weight
 fsw x2,x2,7      ;update the weight
 
 flw x2,x2,8      ;get the nineth weight into float register x2
-addi x1,x1,1     :access next value of pic 
-lw x6,x1,0       ;load the picture pixel
+addi x11,x11,1     :access next value of pic 
+lw x6,x11,0       ;load the picture pixel
 FCVT.S.W x3,x6   ;x3 has the pixel as a float
 fdiv x3,x3,x9   ;we get the input/255 done once per iteration
 fmul x4,x1,x3    ;multiply pixel by error
@@ -267,17 +267,17 @@ fsw x2,x2,8      ;update the weight
 
 addi x3,x3,1    ;access next value of output to get error
 addi x9,x9,1
-mul x1,x10,x4   ;start from fresh row
-add x1,x9,x1    ;update position based on row and column
+mul x11,x10,x4   ;start from fresh row
+add x11,x9,x11    ;update position based on row and column
 bneq x9,x8,update_weights
 addi x9,x0,0
 addi x10,10,1   ;update row count
-mul x1,x10,x4   ;start from fresh row
+mul x11,x10,x4   ;start from fresh row
 bneq x10,x8,update_weights
 
 ;output sum of squared error to user
-sw x16,x0,1035
-out_data x0,1035
+sw x16,x18,0
+out_data x18,0
 
 jalr x0,x0,0    ;restart :) should be done
 
