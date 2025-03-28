@@ -320,7 +320,8 @@ public:
                     // get all 32 bits then take 20 upper ones (strings start from 0 on the left where MSB will be given in this function)
                     // no need for %hi() and %lo() to get the data give 32 bits and it handles the rest
                     OPERAND3 = convert_to_stringOF_binary(OPERAND3, 32);
-                    return OPERAND3.substr(12,31) + OPERAND1 + std::get<0>(instruction_properties.at(opcode));
+                    //the msb is put starting from element 0 
+                    return OPERAND3.substr(0,20) + OPERAND1 + std::get<0>(instruction_properties.at(opcode));
                 break;
 
             case 'J':
@@ -1088,3 +1089,4 @@ public:
 };
 
 #endif
+
