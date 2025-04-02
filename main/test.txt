@@ -1,17 +1,58 @@
-;made to be potentially used as a subroutine 
-;NOTE: add push and pop for set up
-;you provide address of image x11,address of kernel x2 and address of output x3 
-;size of image dimension  in x4,it must be "nxn" and provide n only 
+addi x20,x0,700 ;stack pointer
 
-addi x11,x0,0    ;matrix1 addres 
+addi x11,x0,0    ;picture addres 
 addi x2,x0,1025 ;3x3 kernel (filter)
 addi x3,x0,1040 ;output matrix address
 addi x4,x0,6    ;CONSTANT size of pic (square matrix)
+
+;be aware that system is bor byte adressable memory, so addresses are different by a factor of 4
+;why? cuz i put a word addressable memory but system is byte addressable
+;why again ? xD because word adressable is easier to deal with :)  
+addi x21,x0,convolution_subroutine
+jalr x1,x21,0
+
+addi x11,x0,0    ;desired value address
+addi x2,x0,1025 ;kernel address (3x3 kernel)
+addi x3,x0,1040 ;predicted matrix address
+addi x4,x0,6    ;CONSTANT size of pic (square matrix)
+addi x12,x0,-200   ;learning rate =-2/(value in x12) 
+
+addi x18,x0,1520 ;address of sum of squared error
+
+addi x21,x0,learning_subroutine
+jalr x1,x21,0
+
+jalr x0,x0,0 ;restart :)
+
+
+
+.convolution_subroutine
+
+;you provide address of image x11,address of kernel x2 and address of output x3 
+;size of image dimension  in x4,it must be "nxn" and provide n only 
+;address of subroutine is in x1 and SP is in x20
+
+;**** PUSH the registers **** always put data starting from sp-1
+addi x20,x20,-12    ;make space for 12 registers
+SW x1,x20,0  
+SW x5,x20,1  
+SW x8,x20,2    
+SW x9,x20,3    
+SW x6,x20,4    
+SW x7,x20,5    
+SW x10,x20,6   
+SW x12,x20,7   
+FSW x1,x20,8  
+FSW x2,x20,9   
+FSW x3,x20,10  
+FSW x4,x20,11   
+
 addi x5,x0,3    ;CONSTANT size of (kernel)
 sub x8,x4,x5    ;calculate size of output matrix with stride=1 and no padding(valid) 
 addi x8,x8,1    ;CONSTANT get size of output in x8 with stride=1
 addi x9,x0,0   ;iterator for width matrix(size of output)
 addi x10,x0,0   ;keeps track of rows x10 x x4 to get row we operate on 
+add x12,x0,x11   ;an offset that is used for keeping track of pixels in memory 
 
 ;x6 and x7 used for the calculations
 
@@ -74,25 +115,52 @@ fadd x4,x4,x3   ;accumulate result
 flw x1,x2,8     ;load weight
 addi x11,x11,1
 lw x6,x11,0      ;load picture value 8 next row
-FCVT.S.W x2,x6  ;convert value of picture to float
-fmul x3,x1,x2   ;multiply the weight with picture value and put in x3
-fadd x4,x4,x3   ;accumulate result of convolution  
+FCVT.S.W x2,x6   ;convert value of picture to float
+fmul x3,x1,x2    ;multiply the weight with picture value and put in x3
+fadd x4,x4,x3    ;accumulate result of convolution  
 
 FCVT.W.S x7,x4  ;x4 float has the result of convolution and x7 has conversion
 SW x7,x3,0      ;put result in position
 
-addi x3,x3,1    ;prepare new slot for output
-addi x9,x9,1    ;increment the counter for next iteration
+addi x3,x3,1     ;prepare new slot for output
+addi x9,x9,1     ;increment the counter for next iteration
 mul x11,x4,x10   ;this gets the next row to convolve
-add x11,x9,x11    ;get the next column in the row we are processing
+add x11,x9,x11   ;get the next column in the row we are processing
+add x11,x11,x12  ;get the memory location relative to starting position example: started at ADDRESS 50 then next value is at 51
 bneq x9,x8,convolve 
 
 addi x9,x0,0    ;reset counter
 addi x10,x10,1  ;increment the height by one
 mul x11,x4,x10   ;this gets the next row to convolve
+add x11,x11,x12  ;get the memory location relative to starting position example: started at ADDRESS 50 then next value is at 51
 bneq x10,x8,convolve ;we do that for 29 rows also
 
+;**** POP the registers ****
+LW x1,x20,0
+LW x5,x20,1
+LW x8,x20,2
+LW x9,x20,3
+LW x6,x20,4
+LW x7,x20,5
+LW x10,x20,6
+LW x12,x20,7
+FLW x1,x20,8
+FLW x2,x20,9
+FLW x3,x20,10
+FLW x4,x20,11
+addi x20,x20,12
+jalr x0,x1,0    ;end of convolution_subroutine RET
 
+
+
+.learning_subroutine
+
+;you pass address of image x11,address of kernel x2 ,and output address x3
+;size of image dimension  in x4,it must be "nxn" and provide n only 
+;address where to store (error²) is put in x18
+;x1 has subroutine address and x20 is stack pointer
+;pass learning rate factor in x12 it is calculated usig the following formula
+;learning rate = -2/(factor put in x12)  why? idk just know that you have some control :)
 
 ;calculate error and update weights get Sum of Squared Error
 ;no need to get sqare of error because we do the back propagation hence we need derivative 
@@ -102,25 +170,36 @@ bneq x10,x8,convolve ;we do that for 29 rows also
 ;dL/dw=dZ/dw * dL/dZ=(corresponding pixel we want)*sum((desired-predicted)*(-2))
 ;new W=old W - learning_rate* dL/dW
 
-;made to be potentially used as subroutine x1 has return value
-;NOTE: push values and pop them to go back
-;you pass address of image x11,address of kernel x2 ,and output address x3
-;size of image dimension  in x4,it must be "nxn" and provide n only 
-;address where to store (error²) is put in x18
-;pass learning rate factor in x12 it is calculated usig the following formula
-;learning rate = -2/(factor put in x12)  why? idk just know that you have some control :)
+;**** PUSH registers **** always store starting from sp-1
+addi x20,x20,-20 ;make space for 20 registers
+SW x1,x20,0
+SW x5,x20,1
+SW x6,x20,2
+SW x7,x20,3
+SW x8,x20,4
+SW x9,x20,5
+SW x10,x20,6
+SW x13,x20,7
+SW x14,x20,8
+SW x15,x20,9
+SW x16,x20,10
+SW x17,x20,11
+SW x19,x20,12
+FSW x1,x20,13
+FSW x2,x20,14
+FSW x3,x20,15
+FSW x4,x20,16
+FSW x5,x20,17
+FSW x6,x20,18
+FSW x9,x20,19
 
-addi x11,x0,0    ;desired value address
-addi x2,x0,1025 ;kernel address (3x3 kernel)
-addi x3,x0,1040 ;predicted matrix address
-addi x4,x0,6    ;CONSTANT size of pic (square matrix)
 addi x5,x0,3    ;CONSTANT size of (kernel)
 sub x8,x4,x5    ;calculate size of output matrix with stride=1 and no padding(valid) 
 addi x8,x8,1    ;CONSTANT get size of output in x8 with stride=1
 addi x9,x0,0    ;iterator for width matrix(size of output)
 addi x10,x0,0   ;keeps track of rows x10 x x4 to get row we operate on 
 addi x17,x0,-2  ;CONSTANT -2 for multiplication 
-addi x12,x0,-2000   ;used to calculate learning rate (increases over time)(starts at -20000 and gets smaller) 
+add x19,x11,x0  ;CONSTANT keeps the values aligned to the initial memory location
 
 LUI x13,$80000000   ;CONSTANT used to invert the MSB of float register cuz we only got addition
 ;i was adding 255 each iteration without noticing AHAHAHAHAHAHHAHAHAHHAAHHA i fixed it
@@ -130,7 +209,6 @@ LUI x13,$80000000   ;CONSTANT used to invert the MSB of float register cuz we on
 addi x14,x0,255   ;CONSTANT used to normalize the results to not have gradient exploding
 addi x15,x0,0   ;used to calculate  squared error
 addi x16,x0,0   ;used to calculate the sum of squared error
-addi x18,x0,1035 ;address of sum of squared error
 ;form CONSTANT 0.01 (learning rate) for gradient descent
 FCVT.S.W x9,x14   ;CONSTANT used to normalize the input and the error to not have exploding gradient 
 FCVT.S.W x1,x12   ;-200 float in x1 
@@ -269,17 +347,41 @@ addi x3,x3,1    ;access next value of output to get error
 addi x9,x9,1
 mul x11,x10,x4   ;start from fresh row
 add x11,x9,x11    ;update position based on row and column
+add x11,x19,x11 ;add initial offset
 bneq x9,x8,update_weights
 addi x9,x0,0
 addi x10,10,1   ;update row count
 mul x11,x10,x4   ;start from fresh row
+add x11,x19,x11   ;add inital offset
 bneq x10,x8,update_weights
 
 ;output sum of squared error to user
 sw x16,x18,0
 out_data x18,0
+;**** POP the registers ***
+LW x1,x20,0
+LW x5,x20,1
+LW x6,x20,2
+LW x7,x20,3
+LW x8,x20,4
+LW x9,x20,5
+LW x10,x20,6
+LW x13,x20,7
+LW x14,x20,8
+LW x15,x20,9
+LW x16,x20,10
+LW x17,x20,11
+LW x19,x20,12
+FLW x1,x20,13
+FLW x2,x20,14
+FLW x3,x20,15
+FLW x4,x20,16
+FLW x5,x20,17
+FLW x6,x20,18
+FLW x9,x20,19
+addi x20,x20,20
 
-jalr x0,x0,0    ;restart :) should be done
+jalr x0,x1,0    ;end of learning_subroutine RET
 
 ;this has actually worked !
 ;like the weights are updating but now we need a little bias with each weight
