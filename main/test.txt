@@ -1,9 +1,9 @@
-addi x20,x0,700 ;stack pointer
+addi x20,x0,$7FF ;stack pointer
 
 addi x11,x0,0    ;picture addres 
-addi x2,x0,1025 ;3x3 kernel (filter)
-addi x3,x0,1040 ;output matrix address
-addi x4,x0,6    ;CONSTANT size of pic (square matrix)
+addi x2,x0,1500 ;3x3 kernel (filter)
+addi x3,x0,1510 ;output matrix address
+addi x4,x0,6   ;CONSTANT size of pic (square matrix)
 
 ;be aware that system is bor byte adressable memory, so addresses are different by a factor of 4
 ;why? cuz i put a word addressable memory but system is byte addressable
@@ -12,17 +12,25 @@ addi x21,x0,convolution_subroutine
 jalr x1,x21,0
 
 addi x11,x0,0    ;desired value address
-addi x2,x0,1025 ;kernel address (3x3 kernel)
-addi x3,x0,1040 ;predicted matrix address
+addi x2,x0,1500 ;kernel address (3x3 kernel)
+addi x3,x0,1510 ;predicted matrix address
 addi x4,x0,6    ;CONSTANT size of pic (square matrix)
-addi x12,x0,-200   ;learning rate =-2/(value in x12) 
+addi x12,x0,-2000   ;learning rate =-2/(value in x12) 0.01 
 
-addi x18,x0,1520 ;address of sum of squared error
+addi x18,x0,1720 ;address of sum of squared error
 
 addi x21,x0,learning_subroutine
 jalr x1,x21,0
 
-jalr x0,x0,0 ;restart :)
+;out_data x18,0
+out_data x0,1720
+
+;addi x31,x31,1
+;SW x31,x18,1
+;out_data x18,1
+
+.never_ending_loop
+jalr x0,x0,never_ending_loop ;program should be stuck here :)
 
 
 
@@ -357,7 +365,8 @@ bneq x10,x8,update_weights
 
 ;output sum of squared error to user
 sw x16,x18,0
-out_data x18,0
+
+;out_data x18,0
 ;**** POP the registers ***
 LW x1,x20,0
 LW x5,x20,1
