@@ -35,3 +35,6 @@ main (folder)
 &emsp;&emsp;&emsp;->src(copied from raylib version 5.5 and copy raygui header inside too!)    
       
 This is kindof a project template for anyone that wants to use it.
+make sure you build raylib using cmake and copy libraylib.a file into src folder of raylib then put all the folder in libs folder of this project.  
+make sure you have C++ 17 too! 
+good luck :)
