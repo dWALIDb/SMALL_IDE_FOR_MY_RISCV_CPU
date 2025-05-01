@@ -1,1 +1,9 @@
 add raygui.h and src of raylib(v5.5 if possible) here!
+down load raylib master
+build raylib master using cmake 
+you will find a folder named build that has libraylib.a file 
+copy that file and put it in src forlder of raylib master 
+now copy the whole src folder and paste it here :)
+don't forget the raygui header file 
+all that can be down loaded from  raylib github :) 
+good luck soldier stay HARD
