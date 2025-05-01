@@ -12,7 +12,7 @@ This repository holds an assembler, mif generator , and a serial monitor for UAR
 **BUILD/COMPILATION**  
 **WINDOWS**  
 To compile the project you need some more steps:  
-**FIRST:** you need to copy the whole **src** folder of **raylib(version 5.5)**, and paste it in the libs folder of this project,make sure that libraylib.a is present in the dll files in that src folder, best way to do that is to download raylib from itch.io.
+**FIRST:** you need to copy the whole **src** folder of **raylib(version 5.5)**, and paste it in the libs folder of this project,make sure that libraylib.a is present in the dll files in that src folder, best way to do that is to download raylib from itch.io or download it from github and build it your self using cmake libraylib.a is in build folder after building.
 **SECOND:** copy the **raygui** header file and paste inside the raylib src folder that you copied to libs folder of the project.
 **LAST:** run the batch file COMPILE_WIN.BAT to compile the project with g++ 
 
